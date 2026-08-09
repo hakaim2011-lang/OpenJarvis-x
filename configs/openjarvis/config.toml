@@ -49,13 +49,16 @@ default = "cloud"
 # local engine stanzas below and set engine.default accordingly.
 [engine.cloud]
 # provider options: "openai", "anthropic", "huggingface", "replicate", "mcp"
-provider = "openai"
+provider = "mcp"                         # Default to MCP gateway for personal accounts
 # Optional: explicit model name for the provider (e.g. "gpt-3.5-turbo").
 model = ""
+# Source priority (used when routing across multiple linked providers).
+# The engine will prefer providers in this order when multiple are available.
+source_priority = ["deepseek", "chatgpt", "claude", "perplexity"]
 # Optional MCP/Gateway support: when using a personal MCP server that
 # acts as a chat gateway for your accounts, set MCP_SERVER_URL and
-# MCP_API_KEY as environment variables and set provider = "mcp".
-# MCP-specific fields are read from environment variables, not stored here.
+# MCP_API_KEY as environment variables. MCP-specific fields are read from
+# environment variables, not stored here.
 
 # Keep local engine stanzas so users can still opt-in to local servers
 [engine.vllm]
