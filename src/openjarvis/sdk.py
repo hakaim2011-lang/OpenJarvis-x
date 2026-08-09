@@ -209,8 +209,8 @@ class Jarvis:
         resolved = get_engine(self._config, engine_key)
         if resolved is None:
             raise RuntimeError(
-                "No inference engine available. "
-                "Make sure an engine is running (e.g. ollama serve)."
+                "No inference engine available. Either start a local engine (vllm/ollama/llamacpp) or configure a cloud provider (OpenAI/Anthropic/HuggingFace/MCP). "
+                "See configs/openjarvis/config.toml and set provider-specific environment variables: OPENAI_API_KEY, ANTHROPIC_API_KEY, HUGGINGFACE_API_KEY or configure an MCP gateway with MCP_SERVER_URL and MCP_API_KEY."
             )
         self._resolved_engine_key, engine = resolved
 
