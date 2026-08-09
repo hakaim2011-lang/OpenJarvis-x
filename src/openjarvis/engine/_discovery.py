@@ -25,7 +25,13 @@ _HOST_MAP: Dict[str, str | None] = {
     "uzu": "uzu_host",
     "apple_fm": "apple_fm_host",
     "lemonade": "lemonade_host",
+    # Cloud/provider keys — no host config attribute needed (read from env or provider config)
     "cloud": None,
+    "openai": None,
+    "anthropic": None,
+    "huggingface": None,
+    "replicate": None,
+    "mcp": None,
     "litellm": None,
     "gemma_cpp": None,
 }
@@ -50,7 +56,13 @@ def _make_engine(key: str, config: JarvisConfig) -> InferenceEngine:
         host = getattr(config.engine, host_attr, None)
         if host:
             return cls(host=host)
-    return cls()
+    # If host_attr is None, try to construct without host — engines that
+    # read from environment (cloud/mcp) will inspect env vars themselves.
+    try:
+        return cls()
+    except TypeError:
+        # Some engine classes require a host arg; fall back to calling with None
+        return cls(host=None)
 
 
 def _maybe_register_mining_sidecar_engine() -> None:
@@ -166,7 +178,7 @@ def get_engine(
     serve that model (``engine.can_serve(model)``). This stops the cloud
     fallback from being chosen — when the local engine is down — for a model
     whose provider client is missing, which otherwise surfaces as a confusing
-    "OpenAI client not available" instead of a helpful "start your local
+    "OpenAI client not available" message instead of a helpful "start your local
     engine" message (see #532). When *model* is ``None`` selection stays
     model-agnostic (unchanged behaviour).
 
