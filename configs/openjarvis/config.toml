@@ -4,14 +4,15 @@
 # PILLAR 1: Intelligence — The Model
 # ═══════════════════════════════════════════════════════════════
 [intelligence]
-default_model = "zai-org/GLM-4.7-Flash"   # HuggingFace model ID
-fallback_model = "glm-4.7-flash"          # Catalog alias fallback
-preferred_engine = "vllm"                 # MoE model, vLLM is best for A100s
-provider = "local"                        # Running locally on this machine
-quantization = "none"                     # Full precision, we have 640GB VRAM
-# Generation defaults for eval
-temperature = 0.0                         # Deterministic for reproducibility
-max_tokens = 2048                         # Standard eval output length
+# Leave default_model blank so provider default or explicit config is used.
+default_model = ""   # Provider or user can set a model via configs or env
+fallback_model = ""  # Catalog alias fallback
+preferred_engine = "cloud"                 # Prefer cloud-compatible engine by default
+provider = "cloud"                        # Cloud by default
+quantization = "none"
+# Generation defaults (conservative)
+temperature = 0.7
+max_tokens = 1024
 top_p = 0.9
 top_k = 40
 repetition_penalty = 1.0
@@ -40,10 +41,25 @@ enabled = true
 # PILLAR 4: Engine — The Inference Runtime
 # ═══════════════════════════════════════════════════════════════
 [engine]
-default = "vllm"
+default = "cloud"
 
+# Cloud engine configuration. The project supports selecting a provider
+# (openai, anthropic, huggingface, replicate, mcp) and supplying API keys
+# via environment variables. If you prefer local servers, configure the
+# local engine stanzas below and set engine.default accordingly.
+[engine.cloud]
+# provider options: "openai", "anthropic", "huggingface", "replicate", "mcp"
+provider = "openai"
+# Optional: explicit model name for the provider (e.g. "gpt-3.5-turbo").
+model = ""
+# Optional MCP/Gateway support: when using a personal MCP server that
+# acts as a chat gateway for your accounts, set MCP_SERVER_URL and
+# MCP_API_KEY as environment variables and set provider = "mcp".
+# MCP-specific fields are read from environment variables, not stored here.
+
+# Keep local engine stanzas so users can still opt-in to local servers
 [engine.vllm]
-host = "http://localhost:8001"            # vLLM serving port
+host = "http://localhost:8001"
 
 [engine.ollama]
 host = "http://localhost:11434"
@@ -92,9 +108,9 @@ efficiency_weight = 0.1
 # Supporting config
 # ═══════════════════════════════════════════════════════════════
 [telemetry]
-enabled = true
+enabled = false
 db_path = "~/.openjarvis/telemetry.db"
-gpu_metrics = true
+gpu_metrics = false
 gpu_poll_interval_ms = 50
 energy_vendor = ""                       # Auto-detect; or force "nvidia"/"amd"/"apple"/"cpu_rapl"
 warmup_samples = 0                       # Warmup iterations before steady-state measurement
@@ -102,7 +118,7 @@ steady_state_window = 5                  # Sliding window size for CV stability 
 steady_state_threshold = 0.05            # Coefficient of variation threshold for steady state
 
 [traces]
-enabled = true                            # Record traces for analysis
+enabled = false                            # Record traces for analysis
 db_path = "~/.openjarvis/traces.db"
 
 [server]
