@@ -1,0 +1,38 @@
+# Lite preset: optimized defaults for low-end PCs and mobile devices.
+# "No limits" preset — functional parity preserved, but defaults favor
+# smaller responses and disabled telemetry so the runtime is lightweight.
+
+[intelligence]
+# Keep functionality identical; no hard limits are enforced by this preset.
+# These defaults favor quicker responses for low-bandwidth/low-CPU devices.
+temperature = 0.7
+max_tokens = 512
+top_p = 0.9
+top_k = 40
+repetition_penalty = 1.0
+
+[agent]
+# Keep agent tools enabled ("no limits") so features remain available.
+default_agent = "native_openhands"
+max_turns = 6
+# Leave tools enabled for full capability on-demand
+tools = "code_interpreter,web_search,file_read,calculator,think"
+
+[engine]
+default = "cloud"
+
+[engine.cloud]
+provider = "mcp"
+model = ""
+source_priority = ["deepseek", "chatgpt", "claude", "perplexity"]
+
+[telemetry]
+enabled = false
+
+[traces]
+enabled = false
+
+[server]
+# For mobile use, bind to loopback by default. To expose on LAN set host=0.0.0.0
+host = "127.0.0.1"
+port = 8000
