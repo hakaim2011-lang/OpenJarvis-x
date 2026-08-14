@@ -1,52 +1,29 @@
-"""Small cross-platform utilities used by the CLI, OAuth flow, and evals.
-
-Kept dependency-free so importing this module is cheap (the public re-export
-from ``openjarvis.core`` must not pull in heavy modules at package init).
-"""
-
 from __future__ import annotations
-
-import platform
-import shutil
-import subprocess
-import webbrowser
+from typing import Iterable, Optional, Any
 
 
-def get_python_executable() -> str:
-    """Return the best ``python`` interpreter name on PATH.
+def _normalize(s: str) -> str:
+    return (s or "").strip().lower()
 
-    Prefers ``python3`` (Linux/macOS convention); falls back to ``python``
-    (Windows / some minimal Linux distros that ship only ``python``). Returns
-    the literal string ``"python3"`` when neither is found, so callers still
-    get a usable command that will fail with a clear "command not found"
-    rather than an empty string.
 
-    The result is a *command name or absolute path* that callers can hand to
-    :mod:`subprocess` directly when ``shell=False``, and must be shell-quoted
-    (:func:`shlex.quote`) before being interpolated into a ``shell=True``
-    command string — paths on Windows often contain spaces.
+def canonical_assistant_name_from_text(text: str, config: Any) -> Optional[str]:
+    """Return the canonical assistant name if any alias appears in *text*.
+
+    - config is expected to have an `.assistant` attribute with `aliases` and
+      `canonical_name` fields (as in configs/openjarvis/config.toml).
+    - Matching is case-insensitive and looks for alias substrings.
     """
-    return shutil.which("python3") or shutil.which("python") or "python3"
+    if not text:
+        return None
+    low = _normalize(text)
+    aliases: Iterable[str] = getattr(getattr(config, "assistant", None), "aliases", []) or []
+    canonical = getattr(getattr(config, "assistant", None), "canonical_name", None)
+    for a in aliases:
+        if _normalize(a) in low:
+            return canonical or a
+    return None
 
 
-def open_browser(url: str) -> None:
-    """Open *url* in the user's default browser, with a Windows fast-path.
-
-    :func:`webbrowser.open` is the cross-platform default, but on Windows it
-    sometimes blocks or fails inside a console host. ``cmd /c start "" "URL"``
-    is the canonical Windows incantation that hands the URL to the OS shell
-    and returns immediately. We try that first on Windows and fall back to
-    :func:`webbrowser.open` if the subprocess spawn fails.
-    """
-    if platform.system() == "Windows":
-        try:
-            # The empty title argument after ``start`` is required: ``start``
-            # treats a single quoted argument as a window title, not a URL.
-            subprocess.run(["cmd", "/c", "start", "", url], check=False)
-            return
-        except Exception:  # noqa: BLE001 - any spawn failure -> fall back
-            pass
-    webbrowser.open(url)
-
-
-__all__ = ["get_python_executable", "open_browser"]
+def is_addressed_to_assistant(text: str, config: Any) -> bool:
+    """True when the text appears to address the assistant by any alias."""
+    return canonical_assistant_name_from_text(text, config) is not None
